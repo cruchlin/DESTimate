@@ -1,0 +1,95 @@
+#!/bin/sh
+#SBATCH --mem=MEM                       
+#SBATCH --time=TIME              
+#SBATCH --cpus-per-task=48          
+#SBATCH --mail-user=EMAILADDRESS
+#SBATCH --mail-type=ALL
+
+JobID=`squeue -u cruchlin --format="%.18i,%.100j" | grep DEST-FILENAME | tail -n 1 | cut -b 11-18`
+echo $'\u0394'ESTimate FILENAME OUTPUT: > FILENAME_OUTPUT.log
+module load gaussian
+g16 FILENAME_gs.gjf
+normterm=`grep "Normal termination" FILENAME_gs.log | wc -l`
+if [ $normterm -ne 2 ]
+then
+  echo "Geometry Optimization Failed :(" >> FILENAME_OUTPUT.log
+  rm *.tmp
+  rm core.*
+  scancel $JobID 
+fi
+
+newzmat -ichk FILENAME_gs.chk FILENAME_gs.com
+tail -n +2 FILENAME_gs.com > FILENAME_gsc.tmp
+sed 's/0,1/0 1/g' FILENAME_gsc.tmp > FILENAME_gscoords.tmp
+rm FILENAME_gs.com
+cat singsp_header.tmp FILENAME_gscoords.tmp > FILENAME_singsp.gjf
+cat tgs_header.tmp FILENAME_gsc.tmp > FILENAME_tgs.tmp
+sed 's/0,1/0 3/g' FILENAME_tgs.tmp > FILENAME_tgs.gjf
+cat sing_header.tmp FILENAME_gscoords.tmp > FILENAME_sing.gjf
+g16 FILENAME_singsp.gjf
+g16 FILENAME_tgs.gjf
+g16 FILENAME_sing.gjf
+
+rm *.tmp
+
+#OUTPUT FILE WRITE
+#singsp
+EAbs=`grep "1:" FILENAME_singsp.log | cut -b 41-47`
+echo $'\u0394'EAbs: $EAbs eV >> FILENAME_OUTPUT.log
+
+fAbs=`grep "1:" FILENAME_singsp.log | cut -b 65-70`
+echo fAbs: $fAbs >> FILENAME_OUTPUT.log
+
+ES0=`grep "SCF Done" FILENAME_singsp.log | cut -b 26-39`
+echo ES0: $ES0 a.u. >> FILENAME_OUTPUT.log
+
+#sing
+EFl=`grep "State   1:" FILENAME_sing.log | tail -n 1 | cut -b 41-47`
+echo $'\u0394'EFl: $EFl eV >> FILENAME_OUTPUT.log
+
+ES0v=`grep "SCF Done" FILENAME_sing.log | tail -n 1 | cut -b 26-39`
+echo "ES0'": $ES0v a.u. >> FILENAME_OUTPUT.log
+
+#tgs
+ETGS=`grep "SCF Done" FILENAME_tgs.log | tail -n 1 | cut -b 26-39`
+echo ETGS: $ETGS a.u. >> FILENAME_OUTPUT.log
+
+echo >> FILENAME_OUTPUT.log
+
+Erh=`echo $ES0v - $ES0 | bc -l`
+EreV=`echo "27.2114 * $Erh" | bc -l`
+echo $'\u0394'Ereorg: $EreV eV >> FILENAME_OUTPUT.log
+
+E00=`echo $EFl + $EreV | bc -l`
+echo $'\u0394'E0-0: $E00 eV >> FILENAME_OUTPUT.log
+
+ET1h=`echo $ETGS - $ES0 | bc -l`
+ET1eV=`echo "27.2114 * $ET1h" |bc -l`
+echo $'\u0394'ET1: $ET1eV eV >> FILENAME_OUTPUT.log
+
+echo >> FILENAME_OUTPUT.log
+EST=`echo $E00 - $ET1eV | bc -l`
+echo $'\u0394'ES-T: $EST eV >> FILENAME_OUTPUT.log
+
+echo >> FILENAME_OUTPUT.log
+normsingsp=`grep "Normal termination" FILENAME_singsp.log | wc -l`
+normtgs=`grep "Normal termination" FILENAME_tgs.log | wc -l`
+normsing=`grep "Normal termination" FILENAME_sing.log | wc -l`
+if [ $normsingsp -eq 1 ]
+then
+  echo "Single Point Singlet TD-DFT terminated normally" >> FILENAME_OUTPUT.log
+else
+  echo "!! Single Point Singlet TD-DFT failed" >> FILENAME_OUTPUT.log
+fi
+if [ $normtgs -eq 1 ]
+then
+  echo "Triplet Ground State optimization terminated normally" >> FILENAME_OUTPUT.log 
+else
+  echo "!! Triplet Ground State optimization failed" >> FILENAME_OUTPUT.log
+fi
+if [ $normsing -eq 1 ]
+then
+  echo "Singlet TD-DFT optimization terminated normally" >> FILENAME_OUTPUT.log 
+else
+  echo "!! Singlet TD-DFT optimization failed" >> FILENAME_OUTPUT.log
+fi
