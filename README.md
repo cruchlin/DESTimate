@@ -145,7 +145,7 @@ E.g. if you wish to submit three systems, XX, YY, and ZZ, line 9 should read:
 	for n in "XX" "YY" "ZZ"  
 
 Save these changes and ensure that the file has been uploaded. Ensure that you are working in your DESTfolder directory, and
-move there if necessary. Finally, you can submit the job by runing the following line in your terminal:
+move there if necessary. Finally, you can submit the job by running the following line in your terminal:
 
 	$ sh DESTimate_SUB.sh 
 
@@ -153,7 +153,7 @@ The script will now start running, you should see confirmation of all job submis
 queue printed after a few seconds.
 
 DESTimate_sub.sh is designed to be reusable. To run on a new system, create a new subdirectory following the guidelines in 
-the "Setup" section and change the name in line 9 of DESTimate_SUB.sh as shown above.  
+the "Setup" section and change the name in line 9 of `DESTimate_SUB.sh` as shown above.  
 
 ## Retrieving results:
 
@@ -169,13 +169,13 @@ the subdirectories for your use/examination, and all temporary files generated b
 
 ## Helpful Code:
 
-* Setting permissions for template directory
-  `$ chmod 755 [DIRECTORY]`
-* ~Deleting temporary files if job crashed (EXECUTE ONLY FROM WITHIN SYSTEM SUBDIRECTORY ("ZZ"))
-  `$ rm *.tmp`
-* ~Open nano editor for editing files
-  `$ nano [FILENAME]`
-* ~Open vim editor for editing files 
-  Don't use vim, nano is better
-* ~Quick print file terminal
-  `$ cat [FILENAME]`
+* Setting permissions for template directory 
+  * `$ chmod 755 [DIRECTORY]`
+* Deleting temporary files if job crashed (EXECUTE ONLY FROM WITHIN SYSTEM SUBDIRECTORY ("ZZ")) <br>
+  * `$ rm *.tmp`
+* Open nano editor for editing files 
+  * `$ nano [FILENAME]`
+* Open vim editor for editing files 
+  * Don't use vim, nano is better
+* Quick print file terminal
+  * `$ cat [FILENAME]`
